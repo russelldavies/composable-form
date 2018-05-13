@@ -23,11 +23,15 @@ import List.Nonempty exposing (Nonempty)
 
 
 type Form values output field
-    = Form (List (FieldBuilder values field)) (values -> Result (Nonempty Error) output)
+    = Form (List (FieldBuilder values field)) (FormResult values output)
 
 
 type alias FieldBuilder values field =
     values -> ( field, Maybe Error )
+
+
+type alias FormResult values output =
+    values -> Result (Nonempty Error) output
 
 
 type alias Parser input output =
@@ -39,9 +43,9 @@ fields (Form fields _) values =
     List.map (\builder -> builder values) fields
 
 
-result : Form values output field -> values -> Result (Nonempty Error) output
-result (Form _ output) =
-    output
+result : Form values output field -> FormResult values output
+result (Form _ result) =
+    result
 
 
 
@@ -93,7 +97,7 @@ field { builder, isEmpty } map config =
                                     >> List.Nonempty.fromElement
                                 )
 
-        parse =
+        result =
             config.value >> Value.raw >> requiredParser
 
         update values newValue =
@@ -110,7 +114,7 @@ field { builder, isEmpty } map config =
                 |> flip config.update values
 
         error values =
-            case parse values of
+            case result values of
                 Ok _ ->
                     Nothing
 
@@ -125,12 +129,12 @@ field { builder, isEmpty } map config =
         fieldBuilder values =
             ( builder config.attributes (state values) |> map, error values )
     in
-    Form [ fieldBuilder ] parse
+    Form [ fieldBuilder ] result
 
 
 type alias CustomFieldConfig values output field =
     { builder : FieldBuilder values field
-    , result : values -> Result (Nonempty Error) output
+    , result : FormResult values output
     }
 
 

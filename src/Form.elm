@@ -80,22 +80,30 @@ type Field values
 -- Text fields
 
 
-textField : Base.FieldConfig TextField.Attributes String values output -> Form values output
+textField :
+    Base.FieldConfig TextField.Attributes String values output
+    -> Form values output
 textField =
     TextField.text Text
 
 
-textAreaField : Base.FieldConfig TextField.Attributes String values output -> Form values output
+textAreaField :
+    Base.FieldConfig TextField.Attributes String values output
+    -> Form values output
 textAreaField =
     TextField.textArea Text
 
 
-passwordField : Base.FieldConfig TextField.Attributes String values output -> Form values output
+passwordField :
+    Base.FieldConfig TextField.Attributes String values output
+    -> Form values output
 passwordField =
     TextField.password Text
 
 
-emailField : Base.FieldConfig TextField.Attributes String values output -> Form values output
+emailField :
+    Base.FieldConfig TextField.Attributes String values output
+    -> Form values output
 emailField =
     TextField.email Text
 
@@ -104,7 +112,9 @@ emailField =
 -- Checkbox field
 
 
-checkboxField : Base.FieldConfig CheckboxField.Attributes Bool values output -> Form values output
+checkboxField :
+    Base.FieldConfig CheckboxField.Attributes Bool values output
+    -> Form values output
 checkboxField =
     CheckboxField.build Checkbox
 
@@ -113,6 +123,8 @@ checkboxField =
 -- Select field
 
 
-selectField : Base.FieldConfig SelectField.Attributes String values output -> Form values output
+selectField :
+    Base.FieldConfig SelectField.Attributes String values output
+    -> Form values output
 selectField =
     SelectField.build Select

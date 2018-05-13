@@ -2,12 +2,12 @@ module Form.Value
     exposing
         ( Value
         , blank
-        , change
         , clean
         , dirty
         , isDirty
         , newest
         , raw
+        , update
         , withDefault
         )
 
@@ -75,8 +75,8 @@ withDefault default value =
 -- UPDATE
 
 
-change : a -> Value a -> Value a
-change v value =
+update : a -> Value a -> Value a
+update v value =
     Dirty (version value + 1) v
 
 

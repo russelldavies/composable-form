@@ -38,10 +38,7 @@ text :
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 text =
-    Form.field
-        { builder = TextField RawText
-        , isEmpty = String.isEmpty
-        }
+    Form.field <| buildConfig RawText
 
 
 textArea :
@@ -49,10 +46,7 @@ textArea :
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 textArea =
-    Form.field
-        { builder = TextField TextArea
-        , isEmpty = String.isEmpty
-        }
+    Form.field <| buildConfig TextArea
 
 
 email :
@@ -60,10 +54,7 @@ email :
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 email =
-    Form.field
-        { builder = TextField Email
-        , isEmpty = String.isEmpty
-        }
+    Form.field <| buildConfig Email
 
 
 password :
@@ -71,7 +62,14 @@ password :
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 password =
-    Form.field
-        { builder = TextField Password
-        , isEmpty = String.isEmpty
-        }
+    Form.field <| buildConfig Password
+
+
+
+-- Internal
+
+
+buildConfig type_ =
+    { builder = TextField type_
+    , isEmpty = String.isEmpty
+    }

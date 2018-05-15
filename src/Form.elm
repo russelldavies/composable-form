@@ -8,6 +8,7 @@ module Form
         , emailField
         , empty
         , fields
+        , group
         , optional
         , parser
         , passwordField
@@ -74,6 +75,20 @@ type Field values
     = Text (TextField values)
     | Checkbox (CheckboxField values)
     | Select (SelectField values)
+    | Group (List ( Field values, Maybe Error ))
+
+
+group : Form values output -> Form values output
+group form =
+    let
+        builder values =
+            let
+                fields =
+                    Base.fields form values
+            in
+            ( Group fields, List.head fields |> Maybe.andThen Tuple.second )
+    in
+    Base.custom { builder = builder, parser = Base.parser form }
 
 
 

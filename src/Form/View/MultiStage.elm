@@ -155,7 +155,7 @@ view { onChange, action, loading, next, back } (Form stages form) model =
                 Just (Stage builder _) ->
                     builder model.values
                         |> List.map
-                            (Form.View.field
+                            (Form.View.viewField
                                 { onChange = \values -> onChange { model | values = values }
                                 , onBlur = Nothing
                                 , disabled = model.state == Loading

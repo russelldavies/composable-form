@@ -6,8 +6,8 @@ module Form.View
         , Validation(..)
         , basic
         , errorMessage
-        , field
         , idle
+        , viewField
         )
 
 import Form exposing (Form)
@@ -79,7 +79,7 @@ basic { onChange, action, loadingMessage, validation } form model =
                 |> Maybe.withDefault []
 
         fieldToHtml =
-            field
+            viewField
                 { onChange = \values -> onChange { model | values = values }
                 , onBlur = onBlur
                 , disabled = model.state == Loading
@@ -133,8 +133,8 @@ type alias FieldConfig values msg =
     }
 
 
-field : FieldConfig values msg -> ( Form.Field values, Maybe Error ) -> Html msg
-field { onChange, onBlur, disabled, showError } ( field, maybeError ) =
+viewField : FieldConfig values msg -> ( Form.Field values, Maybe Error ) -> Html msg
+viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
     let
         error label value =
             if showError label then
@@ -193,6 +193,20 @@ field { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                 , value = Value.raw state.value |> Maybe.withDefault ""
                 , error = error attributes.label state.value
                 }
+
+        Form.Group fields ->
+            Html.div
+                []
+                (List.map
+                    (viewField
+                        { onChange = onChange
+                        , onBlur = onBlur
+                        , disabled = disabled
+                        , showError = showError
+                        }
+                    )
+                    fields
+                )
 
 
 errorToString : Error -> String

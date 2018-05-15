@@ -9,8 +9,8 @@ module Form
         , empty
         , fields
         , optional
+        , parser
         , passwordField
-        , result
         , selectField
         , textAreaField
         , textField
@@ -33,9 +33,9 @@ fields =
     Base.fields
 
 
-result : Form values output -> values -> Result (Nonempty Error) output
-result =
-    Base.result
+parser : Form values output -> Base.FormParser values output
+parser =
+    Base.parser
 
 
 

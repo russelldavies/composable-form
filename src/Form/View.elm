@@ -60,7 +60,7 @@ basic : BasicConfig values msg -> Form values msg -> Model values -> Html msg
 basic { onChange, action, loadingMessage, validation } form model =
     let
         onSubmitMsg =
-            case Form.result form model.values of
+            case Form.parser form model.values of
                 Ok msg ->
                     if model.state == Loading then
                         Nothing

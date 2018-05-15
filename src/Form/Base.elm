@@ -2,7 +2,7 @@ module Form.Base
     exposing
         ( FieldConfig
         , Form
-        , Parser
+        , FormParser
         , append
         , appendMeta
         , custom
@@ -10,7 +10,7 @@ module Form.Base
         , field
         , fields
         , optional
-        , result
+        , parser
         )
 
 import Form.Error as Error exposing (Error)
@@ -22,20 +22,18 @@ import List.Nonempty exposing (Nonempty)
 -- Form
 
 
+{-| A set of fields that once validated result in an `output`.
+-}
 type Form values output field
-    = Form (List (FieldBuilder values field)) (FormResult values output)
+    = Form (List (FieldBuilder values field)) (FormParser values output)
 
 
 type alias FieldBuilder values field =
     values -> ( field, Maybe Error )
 
 
-type alias FormResult values output =
+type alias FormParser values output =
     values -> Result (Nonempty Error) output
-
-
-type alias Parser input output =
-    input -> Result String output
 
 
 fields : Form values output field -> values -> List ( field, Maybe Error )
@@ -43,9 +41,9 @@ fields (Form fields _) values =
     List.map (\builder -> builder values) fields
 
 
-result : Form values output field -> FormResult values output
-result (Form _ result) =
-    result
+parser : Form values output field -> FormParser values output
+parser (Form _ parser) =
+    parser
 
 
 
@@ -68,11 +66,15 @@ type alias BuildConfig attrs values input field =
 
 
 type alias FieldConfig attrs input values output =
-    { parser : Parser input output
+    { parser : FieldParser input output
     , value : values -> Value input
     , update : Value input -> values -> values
     , attributes : attrs
     }
+
+
+type alias FieldParser input output =
+    input -> Result String output
 
 
 field :
@@ -97,7 +99,7 @@ field { builder, isEmpty } map config =
                                     >> List.Nonempty.fromElement
                                 )
 
-        result =
+        parser =
             config.value >> Value.raw >> requiredParser
 
         update values newValue =
@@ -114,7 +116,7 @@ field { builder, isEmpty } map config =
                 |> flip config.update values
 
         error values =
-            case result values of
+            case parser values of
                 Ok _ ->
                     Nothing
 
@@ -129,32 +131,32 @@ field { builder, isEmpty } map config =
         fieldBuilder values =
             ( builder config.attributes (state values) |> map, error values )
     in
-    Form [ fieldBuilder ] result
+    Form [ fieldBuilder ] parser
 
 
 type alias CustomFieldConfig values output field =
     { builder : FieldBuilder values field
-    , result : FormResult values output
+    , parser : FormParser values output
     }
 
 
 custom : CustomFieldConfig values output custom -> Form values output custom
-custom { builder, result } =
-    Form [ builder ] result
+custom { builder, parser } =
+    Form [ builder ] parser
 
 
 
 -- Operations
 
 
-{-| Make a field optional. Used in conjunction with [`append`](#append) or
+{-| Make a form optional. Used in conjunction with [`append`](#append) or
 [`appendMeta`](#appendMeta).
 
-    append (optional myField)
+    append (optional myForm)
 
 -}
 optional : Form values output custom -> Form values (Maybe output) custom
-optional (Form builders output) =
+optional (Form fields parser) =
     let
         optionalBuilder builder values =
             case builder values of
@@ -165,7 +167,7 @@ optional (Form builders output) =
                     result
 
         optionalOutput values =
-            case output values of
+            case parser values of
                 Ok value ->
                     Ok (Just value)
 
@@ -175,23 +177,26 @@ optional (Form builders output) =
                     else
                         Err errors
     in
-    Form (List.map optionalBuilder builders) optionalOutput
+    Form (List.map optionalBuilder fields) optionalOutput
 
 
-{-| Add a field to a form, perform validation on it, and pass its value to the
+{-| Add a form, to a form, perform validation on it, and pass its value to the
 form output.
+
+    Form.empty (\foo -> foo) |> Form.append fooField
+
 -}
 append : Form values a custom -> Form values (a -> b) custom -> Form values b custom
-append (Form newFields newOutput) (Form fields output) =
+append (Form newFields newParser) (Form fields parser) =
     Form (fields ++ newFields)
         (\values ->
-            case output values of
-                Ok fn ->
-                    newOutput values
-                        |> Result.map fn
+            case parser values of
+                Ok output ->
+                    newParser values
+                        |> Result.map output
 
                 Err errors ->
-                    case newOutput values of
+                    case newParser values of
                         Ok _ ->
                             Err errors
 
@@ -200,13 +205,20 @@ append (Form newFields newOutput) (Form fields output) =
         )
 
 
-{-| Add a field to a form and perform validation on it but do not pass its
+{-| Add a form to a form and perform validation on it but do not pass its
 value to the form output.
+
+    Form.empty (\foo -> foo)
+        |> Form.append fooField
+        |> Form.appendMeta barField
+
+Notice that the `output` function only takes and results in one argument.
+
 -}
 appendMeta : Form values a custom -> Form values b custom -> Form values b custom
-appendMeta (Form newFields newOutput) (Form fields output) =
+appendMeta (Form newFields newParser) (Form fields parser) =
     Form (fields ++ newFields)
         (\values ->
-            newOutput values
-                |> Result.andThen (always (output values))
+            newParser values
+                |> Result.andThen (always (parser values))
         )

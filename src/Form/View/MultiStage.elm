@@ -45,7 +45,7 @@ add : Form.Form values a -> (a -> Html Never) -> Build values (a -> b) -> Build 
 add form view (Build (Form stages currentForm)) =
     let
         viewStage =
-            Form.result form >> Result.map view >> Result.toMaybe
+            Form.parser form >> Result.map view >> Result.toMaybe
 
         newStage =
             Stage (Form.fields form) viewStage
@@ -114,7 +114,7 @@ view { onChange, action, loading, next, back } (Form stages form) model =
 
         onSubmitMsg =
             if isLastStage then
-                case Form.result form model.values of
+                case Form.parser form model.values of
                     Ok msg ->
                         if model.state == Loading then
                             Nothing

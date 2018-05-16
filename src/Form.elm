@@ -75,18 +75,18 @@ type Field values
     = Text (TextField values)
     | Checkbox (CheckboxField values)
     | Select (SelectField values)
-    | Group (List ( Field values, Maybe Error ))
+    | Group (Maybe String) (List ( Field values, Maybe Error ))
 
 
-group : Form values output -> Form values output
-group form =
+group : Maybe String -> Form values output -> Form values output
+group label form =
     let
         builder values =
             let
                 fields =
                     Base.fields form values
             in
-            ( Group fields, List.head fields |> Maybe.andThen Tuple.second )
+            ( Group label fields, Nothing )
     in
     Base.custom { builder = builder, parser = Base.parser form }
 

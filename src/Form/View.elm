@@ -194,18 +194,28 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                 , error = error attributes.label state.value
                 }
 
-        Form.Group fields ->
+        Form.Group label fields ->
+            let
+                labelView =
+                    case label of
+                        Just label ->
+                            Html.text label
+
+                        Nothing ->
+                            Html.text ""
+            in
             Html.div
                 []
-                (List.map
-                    (viewField
-                        { onChange = onChange
-                        , onBlur = onBlur
-                        , disabled = disabled
-                        , showError = showError
-                        }
-                    )
-                    fields
+                (labelView
+                    :: List.map
+                        (viewField
+                            { onChange = onChange
+                            , onBlur = onBlur
+                            , disabled = disabled
+                            , showError = showError
+                            }
+                        )
+                        fields
                 )
 
 

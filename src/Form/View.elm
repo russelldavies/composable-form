@@ -12,7 +12,7 @@ module Form.View
 
 import Form exposing (Form)
 import Form.Error as Error exposing (Error)
-import Form.Field.TextField as TextField
+import Form.Field.Text
 import Form.Value as Value
 import Html exposing (Html)
 import Html.Attributes as Attributes
@@ -162,16 +162,16 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                     }
             in
             case type_ of
-                TextField.RawText ->
+                Form.Field.Text.RawText ->
                     textField config
 
-                TextField.TextArea ->
+                Form.Field.Text.TextArea ->
                     textArea config
 
-                TextField.Password ->
+                Form.Field.Text.Password ->
                     passwordField config
 
-                TextField.Email ->
+                Form.Field.Text.Email ->
                     emailField config
 
         Form.Checkbox { attributes, state } ->

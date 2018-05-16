@@ -1,7 +1,7 @@
-module Form.Field.TextField
+module Form.Field.Text
     exposing
         ( Attributes
-        , TextField
+        , Field
         , Type(..)
         , email
         , password
@@ -13,7 +13,7 @@ import Form.Base as Form exposing (Form)
 import Form.Field.State exposing (State)
 
 
-type alias TextField values =
+type alias Field values =
     { type_ : Type
     , attributes : Attributes
     , state : State String values
@@ -34,7 +34,7 @@ type alias Attributes =
 
 
 text :
-    (TextField values -> field)
+    (Field values -> field)
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 text =
@@ -42,7 +42,7 @@ text =
 
 
 textArea :
-    (TextField values -> field)
+    (Field values -> field)
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 textArea =
@@ -50,7 +50,7 @@ textArea =
 
 
 email :
-    (TextField values -> field)
+    (Field values -> field)
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 email =
@@ -58,7 +58,7 @@ email =
 
 
 password :
-    (TextField values -> field)
+    (Field values -> field)
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 password =
@@ -70,6 +70,6 @@ password =
 
 
 buildConfig type_ =
-    { builder = TextField type_
+    { builder = Field type_
     , isEmpty = String.isEmpty
     }

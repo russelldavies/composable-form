@@ -19,9 +19,9 @@ module Form
 
 import Form.Base as Base
 import Form.Error exposing (Error)
-import Form.Field.CheckboxField as CheckboxField exposing (CheckboxField)
-import Form.Field.SelectField as SelectField exposing (SelectField)
-import Form.Field.TextField as TextField exposing (TextField)
+import Form.Field.Checkbox
+import Form.Field.Select
+import Form.Field.Text
 import List.Nonempty exposing (Nonempty)
 
 
@@ -72,9 +72,9 @@ appendMeta =
 
 
 type Field values
-    = Text (TextField values)
-    | Checkbox (CheckboxField values)
-    | Select (SelectField values)
+    = Text (Form.Field.Text.Field values)
+    | Checkbox (Form.Field.Checkbox.Field values)
+    | Select (Form.Field.Select.Field values)
     | Group (Maybe String) (List ( Field values, Maybe Error ))
 
 
@@ -96,31 +96,31 @@ group label form =
 
 
 textField :
-    Base.FieldConfig TextField.Attributes String values output
+    Base.FieldConfig Form.Field.Text.Attributes String values output
     -> Form values output
 textField =
-    TextField.text Text
+    Form.Field.Text.text Text
 
 
 textAreaField :
-    Base.FieldConfig TextField.Attributes String values output
+    Base.FieldConfig Form.Field.Text.Attributes String values output
     -> Form values output
 textAreaField =
-    TextField.textArea Text
+    Form.Field.Text.textArea Text
 
 
 passwordField :
-    Base.FieldConfig TextField.Attributes String values output
+    Base.FieldConfig Form.Field.Text.Attributes String values output
     -> Form values output
 passwordField =
-    TextField.password Text
+    Form.Field.Text.password Text
 
 
 emailField :
-    Base.FieldConfig TextField.Attributes String values output
+    Base.FieldConfig Form.Field.Text.Attributes String values output
     -> Form values output
 emailField =
-    TextField.email Text
+    Form.Field.Text.email Text
 
 
 
@@ -128,10 +128,10 @@ emailField =
 
 
 checkboxField :
-    Base.FieldConfig CheckboxField.Attributes Bool values output
+    Base.FieldConfig Form.Field.Checkbox.Attributes Bool values output
     -> Form values output
 checkboxField =
-    CheckboxField.build Checkbox
+    Form.Field.Checkbox.build Checkbox
 
 
 
@@ -139,7 +139,7 @@ checkboxField =
 
 
 selectField :
-    Base.FieldConfig SelectField.Attributes String values output
+    Base.FieldConfig Form.Field.Select.Attributes String values output
     -> Form values output
 selectField =
-    SelectField.build Select
+    Form.Field.Select.build Select

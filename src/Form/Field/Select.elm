@@ -1,10 +1,10 @@
-module Form.Field.SelectField exposing (Attributes, SelectField, build)
+module Form.Field.Select exposing (Attributes, Field, build)
 
 import Form.Base as Form exposing (Form)
 import Form.Field.State exposing (State)
 
 
-type alias SelectField values =
+type alias Field values =
     { attributes : Attributes
     , state : State String values
     }
@@ -18,8 +18,8 @@ type alias Attributes =
 
 
 build :
-    (SelectField values -> field)
+    (Field values -> field)
     -> Form.FieldConfig Attributes String values output
     -> Form values output field
 build =
-    Form.field { builder = SelectField, isEmpty = String.isEmpty }
+    Form.field { builder = Field, isEmpty = String.isEmpty }

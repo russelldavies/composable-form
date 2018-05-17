@@ -12,6 +12,7 @@ module Form
         , optional
         , parser
         , passwordField
+        , radioField
         , selectField
         , textAreaField
         , textField
@@ -20,6 +21,7 @@ module Form
 import Form.Base as Base
 import Form.Error exposing (Error)
 import Form.Field.Checkbox
+import Form.Field.Radio
 import Form.Field.Select
 import Form.Field.Text
 import List.Nonempty exposing (Nonempty)
@@ -74,6 +76,7 @@ appendMeta =
 type Field values
     = Text (Form.Field.Text.Field values)
     | Checkbox (Form.Field.Checkbox.Field values)
+    | Radio (Form.Field.Radio.Field values)
     | Select (Form.Field.Select.Field values)
     | Group (Maybe String) (List ( Field values, Maybe Error ))
 
@@ -132,6 +135,17 @@ checkboxField :
     -> Form values output
 checkboxField =
     Form.Field.Checkbox.build Checkbox
+
+
+
+-- Radio field
+
+
+radioField :
+    Base.FieldConfig Form.Field.Radio.Attributes String values output
+    -> Form values output
+radioField =
+    Form.Field.Radio.build Radio
 
 
 

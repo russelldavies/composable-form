@@ -152,7 +152,7 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
         Form.Text { type_, attributes, state } ->
             let
                 config =
-                    { onInput = state.update >> onChange
+                    { onChange = state.update >> onChange
                     , onBlur = whenDirty state.value (Maybe.map (\onBlur -> onBlur attributes.label) onBlur)
                     , disabled = disabled
                     , label = attributes.label
@@ -178,14 +178,23 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
             checkboxField
                 { checked = Value.raw state.value |> Maybe.withDefault False
                 , disabled = disabled
-                , onCheck = state.update >> onChange
+                , onChange = state.update >> onChange
                 , label = attributes.label
+                , error = error attributes.label state.value
+                }
+
+        Form.Radio { attributes, state } ->
+            radioField attributes.options
+                { onChange = state.update >> onChange
+                , selected = Value.raw state.value
+                , label = attributes.label
+                , disabled = disabled
                 , error = error attributes.label state.value
                 }
 
         Form.Select { attributes, state } ->
             selectField attributes.options
-                { onInput = state.update >> onChange
+                { onChange = state.update >> onChange
                 , onBlur = whenDirty state.value (Maybe.map (\onBlur -> onBlur attributes.label) onBlur)
                 , disabled = disabled
                 , label = attributes.label
@@ -230,17 +239,17 @@ errorToString error =
 
 
 
--- TEXT FIELD
+-- TEXT FIELDS
 
 
 type alias TextFieldConfig msg =
-    { onInput : String -> msg
+    { onChange : String -> msg
     , onBlur : Maybe msg
-    , disabled : Bool
     , value : String
-    , error : Maybe String
     , label : String
     , placeholder : String
+    , disabled : Bool
+    , error : Maybe String
     }
 
 
@@ -249,46 +258,22 @@ textField =
     inputField "text"
 
 
-
--- PASSWORD FIELD
-
-
-type alias PasswordFieldConfig msg =
-    TextFieldConfig msg
-
-
-passwordField : PasswordFieldConfig msg -> Html msg
+passwordField : TextFieldConfig msg -> Html msg
 passwordField =
     inputField "password"
 
 
-
--- EMAIL FIELD
-
-
-type alias EmailFieldConfig msg =
-    TextFieldConfig msg
-
-
-emailField : EmailFieldConfig msg -> Html msg
+emailField : TextFieldConfig msg -> Html msg
 emailField =
     inputField "email"
 
 
-
--- TEXT AREA
-
-
-type alias TextAreaConfig msg =
-    TextFieldConfig msg
-
-
-textArea : TextAreaConfig msg -> Html msg
-textArea { onInput, disabled, value, error, label, placeholder } =
+textArea : TextFieldConfig msg -> Html msg
+textArea { onChange, disabled, value, error, label, placeholder } =
     Html.div [ Attributes.class "elm-form-field" ]
         [ fieldLabel label
         , Html.textarea
-            [ Events.onInput onInput
+            [ Events.onInput onChange
             , Attributes.disabled disabled
             , Attributes.placeholder placeholder
             ]
@@ -302,16 +287,16 @@ textArea { onInput, disabled, value, error, label, placeholder } =
 
 
 type alias CheckboxFieldConfig msg =
-    { checked : Bool
-    , disabled : Bool
-    , onCheck : Bool -> msg
+    { onChange : Bool -> msg
     , label : String
+    , checked : Bool
+    , disabled : Bool
     , error : Maybe String
     }
 
 
 checkboxField : CheckboxFieldConfig msg -> Html msg
-checkboxField { checked, disabled, onCheck, label, error } =
+checkboxField { checked, disabled, onChange, label, error } =
     Html.div
         [ Attributes.classList
             [ ( "elm-form-field", True )
@@ -320,7 +305,7 @@ checkboxField { checked, disabled, onCheck, label, error } =
         ]
         [ Html.label []
             [ Html.input
-                [ Events.onCheck onCheck
+                [ Events.onCheck onChange
                 , Attributes.checked checked
                 , Attributes.disabled disabled
                 , Attributes.type_ "checkbox"
@@ -328,6 +313,58 @@ checkboxField { checked, disabled, onCheck, label, error } =
                 []
             , Html.text label
             ]
+        , errorMessage error
+        ]
+
+
+
+-- RADIO FIELD
+
+
+type alias RadioFieldConfig msg =
+    { onChange : String -> msg
+    , selected : Maybe String
+    , label : String
+    , disabled : Bool
+    , error : Maybe String
+    }
+
+
+radioField : List ( String, String ) -> RadioFieldConfig msg -> Html msg
+radioField options { onChange, selected, label, disabled, error } =
+    let
+        radio value name checked =
+            Html.label []
+                [ Html.input
+                    [ Attributes.checked checked
+                    , Attributes.name label
+                    , Attributes.type_ "radio"
+                    , Attributes.disabled disabled
+                    , Events.onClick (onChange value)
+                    ]
+                    []
+                , Html.text name
+                ]
+
+        isSelected value =
+            selected
+                |> Maybe.map (\selected -> selected == value)
+                |> Maybe.withDefault False
+    in
+    Html.div
+        [ Attributes.classList
+            [ ( "elm-form-field", True )
+            , ( "elm-form-field-error", error /= Nothing )
+            ]
+        ]
+        [ Html.text label
+        , Html.fieldset []
+            (List.map
+                (\( value, name ) ->
+                    radio value name (isSelected value)
+                )
+                options
+            )
         , errorMessage error
         ]
 
@@ -341,7 +378,7 @@ type alias SelectFieldConfig msg =
 
 
 selectField : List ( String, String ) -> TextFieldConfig msg -> Html msg
-selectField options { onInput, onBlur, disabled, value, error, label, placeholder } =
+selectField options { onChange, onBlur, disabled, value, error, label, placeholder } =
     let
         toOption ( key, label ) =
             Html.option
@@ -358,7 +395,7 @@ selectField options { onInput, onBlur, disabled, value, error, label, placeholde
                 [ Html.text ("-- " ++ placeholder ++ " --") ]
 
         fixedAttributes =
-            [ Events.onInput onInput
+            [ Events.onInput onChange
             , Attributes.disabled disabled
             ]
 
@@ -395,10 +432,10 @@ errorMessage =
 
 
 inputField : String -> TextFieldConfig msg -> Html msg
-inputField type_ { onInput, onBlur, disabled, value, error, label, placeholder } =
+inputField type_ { onChange, onBlur, disabled, value, error, label, placeholder } =
     let
         fixedAttributes =
-            [ Events.onInput onInput
+            [ Events.onInput onChange
             , Attributes.disabled disabled
             , Attributes.value value
             , Attributes.placeholder placeholder

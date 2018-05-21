@@ -18,8 +18,6 @@ import Form.Field.Text
 import Form.Value as Value
 import Html exposing (Html)
 import Set exposing (Set)
-import Style
-import Styles
 
 
 type alias Model values =
@@ -45,19 +43,23 @@ idle values =
     }
 
 
-type alias Config values msg =
+type alias Config styles values msg =
     { onChange : Model values -> msg
     , actionMessage : String
     , loadingMessage : String
     , validation : Validation
-
-    --, styles : StylesConfig
+    , styles : StylesConfig styles
     }
 
 
 type alias StylesConfig styles =
-    { column : styles
-    , row : styles
+    { default : styles
+    , button : styles
+    , textField : styles
+    , checkboxField : styles
+    , radioField : styles
+    , error : styles
+    , groupTitle : styles
     }
 
 
@@ -67,11 +69,11 @@ type Validation
 
 
 view :
-    Config values msg
+    Config styles values msg
     -> Form values msg
     -> Model values
-    -> Element Styles.Styles variation msg
-view { onChange, actionMessage, loadingMessage, validation } form model =
+    -> Element styles variation msg
+view { onChange, actionMessage, loadingMessage, validation, styles } form model =
     let
         onSubmitMsg : Maybe msg
         onSubmitMsg =
@@ -108,6 +110,7 @@ view { onChange, actionMessage, loadingMessage, validation } form model =
                 , onBlur = onBlur
                 , disabled = model.state == Loading
                 , showError = \label -> model.showAllErrors || Set.member label model.showFieldError
+                , styles = styles
                 }
 
         formError =
@@ -120,10 +123,10 @@ view { onChange, actionMessage, loadingMessage, validation } form model =
                         _ ->
                             Nothing
             in
-            Element.whenJust error text |> el Styles.None []
+            Element.whenJust error text |> el styles.default []
 
         submitButton =
-            Element.button Styles.None
+            Element.button styles.button
                 (if onSubmitMsg == Nothing then
                     [ Element.Attributes.attribute "disabled" "" ]
                  else
@@ -136,7 +139,7 @@ view { onChange, actionMessage, loadingMessage, validation } form model =
                 )
     in
     Element.node "form" <|
-        Element.column Styles.None
+        Element.column styles.default
             onSubmit
             ((Form.fields form model.values |> List.map renderField)
                 ++ [ formError
@@ -149,16 +152,16 @@ view { onChange, actionMessage, loadingMessage, validation } form model =
 -- FIELD
 
 
-type alias FieldConfig values msg =
+type alias FieldConfig values msg styles =
     { onChange : values -> msg
     , onBlur : Maybe (String -> msg)
     , disabled : Bool
     , showError : String -> Bool
+    , styles : StylesConfig styles
     }
 
 
-viewField : FieldConfig values msg -> ( Form.Field values, Maybe Error ) -> Element Styles.Styles variation msg
-viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
+viewField { onChange, onBlur, disabled, showError, styles } ( field, maybeError ) =
     let
         error label value =
             if showError label then
@@ -186,6 +189,7 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                     , placeholder = attributes.placeholder
                     , value = Value.raw state.value |> Maybe.withDefault ""
                     , error = error attributes.label state.value
+                    , styles = styles
                     }
             in
             case type_ of
@@ -202,17 +206,18 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                     textArea config
 
         Form.Checkbox { attributes, state } ->
-            checkboxField Styles.None
+            checkboxField
                 { checked = Value.raw state.value |> Maybe.withDefault False
                 , disabled = disabled
                 , onChange = state.update >> onChange
                 , onBlur = fieldBlur state.value attributes.label
                 , label = attributes.label
                 , error = error attributes.label state.value
+                , styles = styles
                 }
 
         Form.Radio { attributes, state } ->
-            radioField Styles.None
+            radioField
                 attributes.options
                 { onChange = state.update >> onChange
                 , onBlur = fieldBlur state.value attributes.label
@@ -220,10 +225,11 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                 , label = attributes.label
                 , disabled = disabled
                 , error = error attributes.label state.value
+                , styles = styles
                 }
 
         Form.Select { attributes, state } ->
-            radioField Styles.None
+            radioField
                 attributes.options
                 { onChange = state.update >> onChange
                 , onBlur = fieldBlur state.value attributes.label
@@ -231,13 +237,14 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                 , label = attributes.label
                 , disabled = disabled
                 , error = error attributes.label state.value
+                , styles = styles
                 }
 
         Form.Group label fields ->
-            Element.column Styles.None
+            Element.column styles.default
                 []
-                [ Element.whenJust label text |> Element.el Styles.FormGroupTitle []
-                , Element.row Styles.None
+                [ Element.whenJust label text |> Element.el styles.groupTitle []
+                , Element.row styles.default
                     []
                     (List.map
                         (viewField
@@ -245,6 +252,7 @@ viewField { onChange, onBlur, disabled, showError } ( field, maybeError ) =
                             , onBlur = onBlur
                             , disabled = disabled
                             , showError = showError
+                            , styles = styles
                             }
                         )
                         fields
@@ -266,7 +274,7 @@ errorToString error =
 -- TEXT FIELD
 
 
-type alias TextFieldConfig msg =
+type alias TextFieldConfig styles msg =
     { onChange : String -> msg
     , onBlur : Maybe msg
     , value : String
@@ -274,40 +282,41 @@ type alias TextFieldConfig msg =
     , placeholder : String
     , disabled : Bool
     , error : Maybe String
+    , styles : styles
     }
 
 
 textField =
-    inputField Input.text Styles.None
+    inputField Input.text
 
 
 passwordField =
-    inputField Input.newPassword Styles.None
+    inputField Input.newPassword
 
 
 emailField =
-    inputField Input.email Styles.None
+    inputField Input.email
 
 
 textArea =
-    inputField Input.multiline Styles.None
+    inputField Input.multiline
 
 
-inputField input style { onChange, onBlur, disabled, value, error, label, placeholder } =
+inputField input { onChange, onBlur, disabled, value, error, label, placeholder, styles } =
     let
         attributes =
             [] |> blurEvent onBlur
     in
-    input style
+    input styles.textField
         attributes
         { onChange = onChange
         , value = value
         , label =
             Input.placeholder
-                { label = Input.labelLeft (el Styles.None [] (text label))
+                { label = Input.labelLeft (el styles.default [] (text label))
                 , text = placeholder
                 }
-        , options = [ fieldError error ] |> setDisabled disabled
+        , options = [ fieldError styles.error error ] |> setDisabled disabled
         }
 
 
@@ -315,27 +324,28 @@ inputField input style { onChange, onBlur, disabled, value, error, label, placeh
 -- CHECKBOX FIELD
 
 
-type alias CheckboxFieldConfig msg =
+type alias CheckboxFieldConfig styles msg =
     { onChange : Bool -> msg
     , onBlur : Maybe msg
     , label : String
     , checked : Bool
     , disabled : Bool
     , error : Maybe String
+    , styles : styles
     }
 
 
-checkboxField style { onChange, onBlur, label, checked, disabled, error } =
+checkboxField { onChange, onBlur, label, checked, disabled, error, styles } =
     let
         attributes =
             [] |> blurEvent onBlur
     in
-    Input.checkbox style
+    Input.checkbox styles.checkboxField
         attributes
         { onChange = onChange
-        , label = el Styles.None [] (text label)
+        , label = el styles.default [] (text label)
         , checked = checked
-        , options = [ fieldError error ] |> setDisabled disabled
+        , options = [ fieldError styles.error error ] |> setDisabled disabled
         }
 
 
@@ -343,27 +353,28 @@ checkboxField style { onChange, onBlur, label, checked, disabled, error } =
 -- RADIO FIELD
 
 
-type alias RadioFieldConfig msg =
+type alias RadioFieldConfig styles msg =
     { onChange : String -> msg
     , onBlur : Maybe msg
     , selected : Maybe String
     , label : String
     , disabled : Bool
     , error : Maybe String
+    , styles : styles
     }
 
 
-radioField style options { onChange, onBlur, selected, label, disabled, error } =
+radioField options { onChange, onBlur, selected, label, disabled, error, styles } =
     let
         attributes =
             [] |> blurEvent onBlur
     in
-    Input.radio style
+    Input.radio styles.radioField
         attributes
         { onChange = onChange
         , selected = selected
         , label = Input.labelAbove (text label)
-        , options = [ fieldError error ] |> setDisabled disabled
+        , options = [ fieldError styles.error error ] |> setDisabled disabled
         , choices =
             List.map
                 (\( value, name ) ->
@@ -377,10 +388,10 @@ radioField style options { onChange, onBlur, selected, label, disabled, error } 
 -- HELPERS
 
 
-fieldError : Maybe String -> Input.Option Styles.Styles variation msg
-fieldError error =
+fieldError : styles -> Maybe String -> Input.Option styles variation msg
+fieldError style error =
     Element.whenJust error text
-        |> el Styles.None []
+        |> el style []
         |> Input.errorBelow
 
 

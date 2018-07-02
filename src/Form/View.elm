@@ -182,6 +182,7 @@ type alias CustomConfig msg element =
     , radioField : RadioFieldConfig msg -> element
     , selectField : SelectFieldConfig msg -> element
     , group : List element -> element
+    , section : String -> List element -> element
     }
 
 
@@ -348,6 +349,7 @@ a [`ViewConfig`](#ViewConfig). In fact, [`asHtml`](#asHtml) is implemented using
             , radioField = radioField
             , selectField = selectField
             , group = group
+            , section = section
             }
 
 -}
@@ -530,6 +532,9 @@ renderField customConfig ({ onChange, onBlur, disabled, showError } as fieldConf
         Form.Group fields ->
             customConfig.group (List.map (renderField customConfig fieldConfig) fields)
 
+        Form.Section title fields ->
+            customConfig.section title (List.map (renderField customConfig fieldConfig) fields)
+
 
 
 -- Basic HTML
@@ -585,6 +590,7 @@ asHtml =
         , radioField = radioField
         , selectField = selectField
         , group = group
+        , section = section
         }
 
 
@@ -758,6 +764,14 @@ selectField { onChange, onBlur, disabled, value, error, showError, attributes } 
 group : List (Html msg) -> Html msg
 group =
     Html.div [ Attributes.class "elm-form-group" ]
+
+
+section : String -> List (Html msg) -> Html msg
+section title fields =
+    Html.fieldset []
+        (Html.legend [] [ Html.text title ]
+            :: fields
+        )
 
 
 wrapInFieldContainer : Bool -> Maybe Error -> List (Html msg) -> Html msg

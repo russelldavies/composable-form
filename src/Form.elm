@@ -17,6 +17,7 @@ module Form
         , passwordField
         , radioField
         , rangeField
+        , section
         , selectField
         , succeed
         , textField
@@ -420,6 +421,21 @@ group form =
         )
 
 
+section : String -> Form values output -> Form values output
+section title form =
+    Base.custom
+        (\values ->
+            let
+                { fields, result, isEmpty } =
+                    Base.fill form values
+            in
+            { field = Section title fields
+            , result = result
+            , isEmpty = isEmpty
+            }
+        )
+
+
 {-| Fill a form `andThen` fill another one.
 
 This is useful to build dynamic forms. For instance, you could use the output of a `selectField`
@@ -606,6 +622,9 @@ mapValues { value, update } form =
                         Group fields ->
                             Group (List.map (\( field, error ) -> ( mapField field, error )) fields)
 
+                        Section title fields ->
+                            Section title (List.map (\( field, error ) -> ( mapField field, error )) fields)
+
                 mapUpdate fn value =
                     update (fn value) values
             in
@@ -633,6 +652,7 @@ type Field values
     | Radio (RadioField values)
     | Select (SelectField values)
     | Group (List ( Field values, Maybe Error ))
+    | Section String (List ( Field values, Maybe Error ))
 
 
 {-| Represents a type of text field

@@ -70,6 +70,7 @@ asElement =
         , radioField = radioField
         , selectField = selectField
         , group = group
+        , section = section
         }
 
 
@@ -245,6 +246,25 @@ selectField { onChange, onBlur, disabled, value, error, showError, attributes } 
 group : List (Element msg) -> Element msg
 group =
     row [ spacing 12 ]
+
+
+section : String -> List (Element msg) -> Element msg
+section title fields =
+    column
+        [ Border.solid
+        , Border.width 1
+        , padding 20
+        , inFront
+            (el
+                [ moveUp 10
+                , moveRight 10
+                , Background.color Color.white
+                , width shrink
+                ]
+                (text title)
+            )
+        ]
+        fields
 
 
 errorToString : Error -> String

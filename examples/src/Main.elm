@@ -1,8 +1,10 @@
 module Main exposing (main)
 
 import Browser.Navigation as Navigation
+import Form.View
 import Html exposing (Html)
 import Html.Attributes as Attributes
+import Html.Events
 import Page.Composability.Simple as Composability
 import Page.CustomFields as CustomFields
 import Page.DynamicForm as DynamicForm
@@ -17,7 +19,13 @@ import View
 type alias Model =
     { page : Page
     , key : Route.Key
+    , formView : FormView
     }
+
+
+type FormView
+    = Default
+    | Ui
 
 
 type Page
@@ -36,6 +44,7 @@ type Msg
     = RouteAccessed Route
     | Navigate Route
     | LoadExternalUrl String
+    | SelectedFormView FormView
     | LoginMsg Login.Msg
     | SignupMsg Signup.Msg
     | DynamicFormMsg DynamicForm.Msg
@@ -61,6 +70,7 @@ init : Route -> Route.Key -> ( Model, Cmd Msg )
 init route key =
     ( { page = fromRoute route
       , key = key
+      , formView = Default
       }
     , Cmd.none
     )
@@ -77,6 +87,9 @@ update msg model =
 
         LoadExternalUrl string ->
             ( model, Navigation.load string )
+
+        SelectedFormView formView ->
+            ( { model | formView = formView }, Cmd.none )
 
         LoginMsg loginMsg ->
             case model.page of
@@ -150,6 +163,15 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        formView =
+            case model.formView of
+                Default ->
+                    Form.View.asHtml
+
+                Ui ->
+                    View.asUi
+    in
     Html.div []
         [ Html.header []
             [ Html.h1 [] [ Html.text "composable-form" ]
@@ -164,26 +186,26 @@ view model =
         , Html.div [ Attributes.class "wrapper" ]
             [ case model.page of
                 Home ->
-                    viewHome
+                    viewHome model.formView
 
                 Login loginModel ->
-                    Login.view loginModel
+                    Login.view formView loginModel
                         |> Html.map LoginMsg
 
                 Signup signupModel ->
-                    Signup.view signupModel
+                    Signup.view formView signupModel
                         |> Html.map SignupMsg
 
                 DynamicForm subModel ->
-                    DynamicForm.view subModel
+                    DynamicForm.view formView subModel
                         |> Html.map DynamicFormMsg
 
                 ValidationStrategies subModel ->
-                    ValidationStrategies.view subModel
+                    ValidationStrategies.view formView subModel
                         |> Html.map ValidationStrategiesMsg
 
                 Composability subModel ->
-                    Composability.view subModel
+                    Composability.view formView subModel
                         |> Html.map ComposabilityMsg
 
                 MultiStage subModel ->
@@ -235,8 +257,8 @@ fromRoute route =
             NotFound
 
 
-viewHome : Html Msg
-viewHome =
+viewHome : FormView -> Html Msg
+viewHome formView =
     let
         examples =
             [ ( "Login"
@@ -277,6 +299,24 @@ viewHome =
     in
     Html.div []
         [ Html.h1 [] [ Html.text "Examples" ]
+        , Html.fieldset []
+            [ Html.legend [] [ Html.text "Form View" ]
+            , radio (SelectedFormView Default) (formView == Default) "Default"
+            , radio (SelectedFormView Ui) (formView == Ui) "Elm Ui"
+            ]
         , Html.ul []
             (List.map toItem examples)
+        ]
+
+
+radio : msg -> Bool -> String -> Html msg
+radio msg isChecked name =
+    Html.label []
+        [ Html.input
+            [ Attributes.type_ "radio"
+            , Html.Events.onClick msg
+            , Attributes.checked isChecked
+            ]
+            []
+        , Html.text name
         ]
